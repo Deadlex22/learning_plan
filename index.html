@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>План обучения — ИИ-чат с памятью</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Unbounded:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0e0e11;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      color: #e0e0e0;
+      padding: 32px 16px;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1a1a1f; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .label { font-size: 11px; letter-spacing: 3px; color: #00C896; margin-bottom: 8px; text-transform: uppercase; }
+    h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(22px, 5vw, 36px); font-weight: 900; line-height: 1.1; color: #fff; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 13px; margin-bottom: 40px; }
+    .progress-box { background: #1a1a1f; border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; border: 1px solid #222; }
+    .progress-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    .progress-label { font-size: 12px; color: #888; }
+    .progress-count { font-family: 'Unbounded', sans-serif; font-size: 13px; color: #fff; font-weight: 700; }
+    .progress-bar-bg { height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #6C63FF, #00C896); border-radius: 3px; transition: width 0.4s ease; }
+    .done-msg { text-align: center; margin-top: 12px; color: #00C896; font-size: 13px; display: none; }
+    .week { margin-bottom: 40px; }
+    .week-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .week-num { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .week-meta { font-size: 10px; color: #555; letter-spacing: 2px; text-transform: uppercase; }
+    .week-title { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; color: #fff; }
+    .days { display: flex; flex-direction: column; gap: 8px; }
+    .day-card { background: #13131a; border: 1px solid #1e1e26; border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
+    .day-card:hover { border-color: #333; }
+    .day-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+    .day-left { display: flex; align-items: center; gap: 12px; }
+    .day-badge { font-size: 10px; letter-spacing: 1px; min-width: 64px; }
+    .day-name { font-size: 14px; font-weight: 500; color: #e0e0e0; }
+    .day-name.done { color: #555; text-decoration: line-through; }
+    .day-right { display: flex; align-items: center; gap: 10px; }
+    .day-counter { font-size: 11px; color: #555; }
+    .day-counter.done { color: #00C896; }
+    .chevron { color: #444; font-size: 12px; display: inline-block; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+    .day-body { padding: 0 20px 20px; display: none; }
+    .day-body.open { display: block; }
+    .goal-box { border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; }
+    .tasks { margin-bottom: 16px; }
+    .task { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; cursor: pointer; transition: opacity 0.2s; }
+    .task:hover { opacity: 0.8; }
+    .task.checked { opacity: 0.45; }
+    .checkbox { width: 18px; height: 18px; min-width: 18px; border-radius: 4px; border: 2px solid #444; background: transparent; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.2s; flex-shrink: 0; }
+    .checkbox.checked { background: #00C896; border-color: #00C896; }
+    .checkbox.checked::after { content: '✓'; color: #000; font-size: 11px; font-weight: bold; }
+    .task-text { font-size: 13px; color: #ccc; line-height: 1.5; }
+    .task.checked .task-text { text-decoration: line-through; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .link-btn { font-size: 11px; color: #888; background: #1a1a22; border: 1px solid #2a2a35; border-radius: 6px; padding: 5px 10px; text-decoration: none; transition: background 0.15s; }
+    .link-btn:hover { background: #1e1e26; }
+    .footer { text-align: center; padding: 24px; color: #333; font-size: 11px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">// план обучения</div>
+  <h1>ИИ-чат с памятью<br>за 3 недели</h1>
+  <p class="subtitle">Linux · Git · Docker · Ollama · Python · FastAPI · SQLite · ChromaDB · RAG</p>
+
+  <div class="progress-box">
+    <div class="progress-top">
+      <span class="progress-label">Общий прогресс</span>
+      <span class="progress-count" id="prog-count">0 / 0 задач</span>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="prog-bar"></div></div>
+    <div class="done-msg" id="done-msg">🎉 Готово! Показывай начальнику</div>
+  </div>
+
+  <div id="plan"></div>
+  <div class="footer">30 мин в день → результат за 3 недели</div>
+</div>
+
+<script>
+const plan = [
+  {
+    week: 1, title: "Поднимаем сервер", color: "#00C896",
+    days: [
+      {
+        days: "День 1–2", title: "WSL2 + Linux основы",
+        goal: "Чувствовать себя в терминале комфортно",
+        tasks: [
+          "Установить WSL2 с Ubuntu (Microsoft Store → Ubuntu)",
+          "Выучить команду ls — список файлов",
+          "Выучить cd, mkdir — навигация и папки",
+          "Выучить cp, mv, rm — копировать, переместить, удалить",
+          "Выучить cat — прочитать файл",
+          "Выучить sudo, apt install — установка программ",
+          "Выучить ssh — подключение к серверу",
+          "Попрактиковаться: создать папку проекта, файлы внутри",
+        ],
+        links: [
+          { label: "Ubuntu в Microsoft Store", url: "https://apps.microsoft.com/store/detail/ubuntu/9PDXGNCFSCZV" },
+          { label: "Linux команды для новичков", url: "https://losst.pro/osnovnye-komandy-linux" },
+        ],
+      },
+      {
+        days: "День 3", title: "Git + GitHub",
+        goal: "Проект живёт на GitHub с первого дня",
+        tasks: [
+          "Зарегистрироваться на github.com",
+          "Установить Git в WSL2: sudo apt install git",
+          "Создать первый репозиторий на GitHub",
+          "git clone — скачать репозиторий",
+          "git add . — подготовить файлы",
+          "git commit -m 'first commit' — сохранить версию",
+          "git push — отправить на GitHub",
+          "Создать папку проекта и запушить первый README",
+        ],
+        links: [
+          { label: "GitHub — регистрация", url: "https://github.com" },
+          { label: "Git за 30 минут", url: "https://proglib.io/p/git-for-30-minutes" },
+        ],
+      },
+      {
+        days: "День 4–5", title: "Ollama + первая нейросеть",
+        goal: "Локальная нейронка работает на твоём железе 🎉",
+        tasks: [
+          "Установить Ollama для Windows (ollama.com)",
+          "Запустить в WSL2: ollama pull qwen3:8b",
+          "Запустить модель: ollama run qwen3:8b",
+          "Поговорить с моделью в терминале",
+          "Попробовать другую модель: ollama pull mistral",
+          "Изучить команду ollama list — список моделей",
+        ],
+        links: [
+          { label: "Ollama — скачать", url: "https://ollama.com" },
+          { label: "Список моделей на Ollama", url: "https://ollama.com/library" },
+        ],
+      },
+      {
+        days: "День 6–7", title: "Docker + Open WebUI",
+        goal: "Открываешь свой ChatGPT в браузере с макбука",
+        tasks: [
+          "Установить Docker Desktop для Windows",
+          "Убедиться что Docker работает: docker --version",
+          "Запустить Open WebUI через Docker (одна команда)",
+          "Открыть браузер: http://localhost:3000",
+          "Подключить к своей Ollama модели",
+          "Зайти с макбука по IP адресу компа",
+          "Убедиться что всё работает через локальную сеть",
+        ],
+        links: [
+          { label: "Docker Desktop", url: "https://www.docker.com/products/docker-desktop" },
+          { label: "Open WebUI на GitHub", url: "https://github.com/open-webui/open-webui" },
+        ],
+      },
+    ],
+  },
+  {
+    week: 2, title: "Добавляем мозги и память", color: "#6C63FF",
+    days: [
+      {
+        days: "День 8–9", title: "Python минимум",
+        goal: "Понимать код и не бояться его",
+        tasks: [
+          "Установить Python в WSL2: sudo apt install python3",
+          "Установить pip — менеджер пакетов",
+          "Выучить переменные и типы данных",
+          "Выучить функции def",
+          "Выучить requests — делать запросы к API",
+          "Написать скрипт который обращается к Ollama API",
+          "Получить ответ от нейронки через Python",
+        ],
+        links: [
+          { label: "Python для начинающих", url: "https://pythonworld.ru/osnovy" },
+          { label: "FastAPI документация", url: "https://fastapi.tiangolo.com" },
+        ],
+      },
+      {
+        days: "День 10–11", title: "Backend на FastAPI",
+        goal: "Сервер принимает сообщения и отдаёт ответы",
+        tasks: [
+          "Установить FastAPI: pip install fastapi uvicorn",
+          "Создать простой сервер с одним маршрутом /chat",
+          "Подключить Ollama к серверу",
+          "Сервер принимает текст → отдаёт ответ нейронки",
+          "Проверить через браузер что сервер работает",
+          "Добавить CORS чтобы HTML страница могла обращаться",
+        ],
+        links: [
+          { label: "FastAPI — быстрый старт", url: "https://fastapi.tiangolo.com/tutorial/first-steps" },
+        ],
+      },
+      {
+        days: "День 12–13", title: "HTML чат + память диалогов",
+        goal: "Полноценный веб-чат с памятью — твоя рабочая задача решена",
+        tasks: [
+          "Создать HTML страницу с полем ввода и чатом",
+          "Подключить JavaScript для отправки сообщений на сервер",
+          "Установить SQLite: pip install sqlite3",
+          "Создать таблицу для хранения истории диалогов",
+          "Бот получает последние N сообщений из базы",
+          "Передаёт историю в нейронку как контекст",
+          "Протестировать: бот помнит предыдущие сообщения",
+        ],
+        links: [
+          { label: "SQLite в Python", url: "https://docs.python.org/3/library/sqlite3.html" },
+        ],
+      },
+      {
+        days: "День 14", title: "Docker + GitHub — финал недели",
+        goal: "Готовый концепт который можно показать начальнику",
+        tasks: [
+          "Написать Dockerfile для Python бэкенда",
+          "Собрать образ: docker build",
+          "Запустить всё через docker-compose",
+          "Написать README на GitHub — что это и как запустить",
+          "Запушить весь проект на GitHub",
+          "Открыть с макбука и убедиться что всё работает",
+          "🎉 Показать начальнику готовый концепт",
+        ],
+        links: [
+          { label: "Dockerfile — основы", url: "https://docs.docker.com/guides/docker-overview" },
+          { label: "Docker Compose", url: "https://docs.docker.com/compose" },
+        ],
+      },
+    ],
+  },
+  {
+    week: 3, title: "RAG — база знаний с умным поиском", color: "#FF6B6B",
+    days: [
+      {
+        days: "День 15–16", title: "ChromaDB — векторная база данных",
+        goal: "База знаний загружена и готова к поиску по смыслу",
+        tasks: [
+          "Установить ChromaDB в WSL2: pip install chromadb",
+          "Понять что такое векторная база — поиск по смыслу, не по словам",
+          "Создать коллекцию в ChromaDB",
+          "Придумать 20-30 FAQ для фиктивной страховой компании",
+          "Загрузить FAQ в ChromaDB через Python скрипт",
+          "Сделать первый поиск: найти релевантные куски по запросу",
+          "Убедиться что поиск находит правильные ответы",
+        ],
+        links: [
+          { label: "ChromaDB документация", url: "https://docs.trychroma.com" },
+          { label: "ChromaDB на GitHub", url: "https://github.com/chroma-core/chroma" },
+        ],
+      },
+      {
+        days: "День 17–18", title: "Embeddings через Ollama",
+        goal: "Текст превращается в числа локально — без внешних API",
+        tasks: [
+          "Понять что такое embeddings — числовое представление смысла текста",
+          "Скачать модель для embeddings: ollama pull nomic-embed-text",
+          "Написать функцию которая превращает текст в embedding",
+          "Переиндексировать FAQ через локальные embeddings",
+          "Проверить что поиск стал точнее",
+          "Сравнить результаты поиска до и после embeddings",
+        ],
+        links: [
+          { label: "nomic-embed-text на Ollama", url: "https://ollama.com/library/nomic-embed-text" },
+          { label: "Что такое embeddings", url: "https://habr.com/ru/articles/748328" },
+        ],
+      },
+      {
+        days: "День 19–20", title: "Связываем RAG с чатом",
+        goal: "Бот отвечает опираясь на базу знаний — точно и по делу",
+        tasks: [
+          "Добавить в FastAPI маршрут с RAG логикой",
+          "При каждом вопросе искать топ-3 релевантных куска в ChromaDB",
+          "Передавать найденные куски + вопрос в Qwen3 8B как контекст",
+          "Добавить в промпт инструкцию: отвечай только на основе контекста",
+          "Протестировать: задать вопросы из FAQ и не из FAQ",
+          "Убедиться что бот не выдумывает — говорит 'не знаю' если нет в базе",
+          "Подключить к HTML чату из недели 2",
+        ],
+        links: [
+          { label: "RAG объяснение простыми словами", url: "https://habr.com/ru/articles/779526" },
+        ],
+      },
+      {
+        days: "День 21", title: "Docker Compose финал + GitHub",
+        goal: "Полный стек в одной команде — готовый концепт для работы 🚀",
+        tasks: [
+          "Добавить ChromaDB как отдельный контейнер в docker-compose.yml",
+          "Убедиться что все сервисы поднимаются одной командой: docker-compose up",
+          "Проверить что данные ChromaDB сохраняются между перезапусками (volume)",
+          "Написать подробный README: архитектура, как запустить, как добавить знания",
+          "Нарисовать схему архитектуры в README (можно ASCII)",
+          "Запушить финальную версию на GitHub",
+          "🎉 Показать начальнику — это продакшн архитектура",
+        ],
+        links: [
+          { label: "Docker volumes документация", url: "https://docs.docker.com/storage/volumes" },
+        ],
+      },
+    ],
+  },
+];
+
+// State: load from localStorage
+const STORAGE_KEY = 'learning-plan-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) {}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function updateProgress() {
+  const keys = Object.keys(state);
+  const total = plan.reduce((a, w) => a + w.days.reduce((b, d) => b + d.tasks.length, 0), 0);
+  const done = Object.values(state).filter(Boolean).length;
+  document.getElementById('prog-count').textContent = `${done} / ${total} задач`;
+  document.getElementById('prog-bar').style.width = total ? `${Math.round(done/total*100)}%` : '0%';
+  document.getElementById('done-msg').style.display = done === total && total > 0 ? 'block' : 'none';
+}
+
+function taskKey(dayId, i) { return `${dayId}__${i}`; }
+
+function renderPlan() {
+  const container = document.getElementById('plan');
+  container.innerHTML = '';
+
+  plan.forEach(week => {
+    const weekEl = document.createElement('div');
+    weekEl.className = 'week';
+    weekEl.innerHTML = `
+      <div class="week-header">
+        <div class="week-num" style="background:${week.color}22;border:1px solid ${week.color}44;color:${week.color}">${week.week}</div>
+        <div>
+          <div class="week-meta">неделя ${week.week}</div>
+          <div class="week-title">${week.title}</div>
+        </div>
+      </div>
+      <div class="days" id="week-days-${week.week}"></div>
+    `;
+    container.appendChild(weekEl);
+
+    const daysEl = weekEl.querySelector(`#week-days-${week.week}`);
+
+    week.days.forEach(day => {
+      const dayEl = document.createElement('div');
+      dayEl.className = 'day-card';
+
+      const total = day.tasks.length;
+      const done = day.tasks.filter((_, i) => state[taskKey(day.days, i)]).length;
+      const allDone = done === total;
+
+      dayEl.innerHTML = `
+        <div class="day-header" data-day="${day.days}">
+          <div class="day-left">
+            <div class="day-badge" style="color:${week.color}">${day.days}</div>
+            <div class="day-name ${allDone ? 'done' : ''}">${day.title}</div>
+          </div>
+          <div class="day-right">
+            <span class="day-counter ${allDone ? 'done' : ''}">${done}/${total}</span>
+            <span class="chevron" data-day="${day.days}">▼</span>
+          </div>
+        </div>
+        <div class="day-body" id="body-${CSS.escape(day.days)}">
+          <div class="goal-box" style="background:${week.color}11;border:1px solid ${week.color}22;color:${week.color}">
+            🎯 Цель: ${day.goal}
+          </div>
+          <div class="tasks" id="tasks-${CSS.escape(day.days)}"></div>
+          ${day.links && day.links.length ? `<div class="links">${day.links.map(l => `<a class="link-btn" href="${l.url}" target="_blank" rel="noreferrer">→ ${l.label}</a>`).join('')}</div>` : ''}
+        </div>
+      `;
+
+      daysEl.appendChild(dayEl);
+
+      // Render tasks
+      const tasksEl = dayEl.querySelector(`#tasks-${CSS.escape(day.days)}`);
+      day.tasks.forEach((task, i) => {
+        const key = taskKey(day.days, i);
+        const checked = !!state[key];
+        const taskEl = document.createElement('div');
+        taskEl.className = `task ${checked ? 'checked' : ''}`;
+        taskEl.dataset.key = key;
+        taskEl.dataset.day = day.days;
+        taskEl.innerHTML = `
+          <div class="checkbox ${checked ? 'checked' : ''}"></div>
+          <span class="task-text">${task}</span>
+        `;
+        taskEl.addEventListener('click', () => {
+          state[key] = !state[key];
+          save();
+          renderPlan();
+          updateProgress();
+        });
+        tasksEl.appendChild(taskEl);
+      });
+
+      // Toggle open/close
+      dayEl.querySelector('.day-header').addEventListener('click', (e) => {
+        if (e.target.closest('.task')) return;
+        const bodyId = `body-${CSS.escape(day.days)}`;
+        const body = document.getElementById(bodyId);
+        const chevron = dayEl.querySelector('.chevron');
+        const isOpen = body.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.day-body').forEach(b => b.classList.remove('open'));
+        document.querySelectorAll('.chevron').forEach(c => c.classList.remove('open'));
+        document.querySelectorAll('.day-card').forEach(c => c.style.borderColor = '');
+        if (!isOpen) {
+          body.classList.add('open');
+          chevron.classList.add('open');
+          dayEl.style.borderColor = `${week.color}44`;
+        }
+      });
+    });
+  });
+
+  // Open first day by default if nothing open
+  const firstBody = document.querySelector('.day-body');
+  if (firstBody && !document.querySelector('.day-body.open')) {
+    firstBody.classList.add('open');
+    firstBody.previousElementSibling.querySelector('.chevron').classList.add('open');
+  }
+
+  updateProgress();
+}
+
+renderPlan();
+</script>
+
+</body>
+</html>
